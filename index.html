@@ -3,794 +3,876 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebird CRM</title>
+    <title>Sistema de Gestão de Orçamentos e Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class', // Habilita o modo escuro baseado em classe
-            theme: {
-                extend: {
-                    colors: {
-                        'primary': {
-                            '50': '#fffbeb',
-                            '100': '#fef3c7',
-                            '200': '#fde68a',
-                            '300': '#fcd34d',
-                            '400': '#fbbf24',
-                            '500': '#f59e0b',
-                            '600': '#d97706',
-                            '700': '#b45309',
-                            '800': '#92400e',
-                            '900': '#78350f',
-                        },
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
         }
         .tab-active {
-            border-bottom-color: #f59e0b;
-            color: #f59e0b;
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
         }
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
-            transition: opacity 0.3s ease-in-out;
+        .modal {
+            display: none;
         }
-        .modal-content {
-            transition: transform 0.3s ease-in-out;
+        .modal-open {
+            display: flex;
         }
-        .dropdown-menu {
-            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        /* Estilo para abas do modal de produto */
-        .modal-tab {
-            @apply px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:text-primary-600 hover:border-primary-500;
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
-        .modal-tab-active {
-            @apply text-primary-600 dark:text-primary-500 border-primary-500;
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
         }
-        /* Estilo para o toggle de Situação */
-        .toggle-bg:after {
-            content: '';
-            @apply absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition shadow-sm;
-        }
-        input:checked + .toggle-bg:after {
-            @apply transform translate-x-full;
-        }
-        input:checked + .toggle-bg {
-            @apply bg-primary-500 border-primary-500;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+<body class="antialiased text-gray-800">
 
-    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        
-        <header class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-primary-500" viewBox="0 0 20 20" fill="currentColor">
-                           <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                        </svg>
-                        Firebird CRM
-                    </h1>
-                    <p class="text-gray-500 dark:text-gray-400 mt-1">Gerencie seus produtos, clientes e orçamentos com agilidade.</p>
-                </div>
-                 <div class="flex items-center gap-4">
-                    <div id="auth-status" class="text-sm text-gray-500 dark:text-gray-400 text-right"></div>
-                    <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-                        <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                        <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm-.707 10.607a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707-.707a1 1 0 01-1.414 0zM3 11a1 1 0 100-2H2a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
-                    </button>
+    <!-- Main Container -->
+    <div class="min-h-screen flex flex-col">
+
+        <!-- Header -->
+        <header class="bg-white shadow-md sticky top-0 z-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <i data-lucide="file-text" class="h-8 w-8 text-blue-600"></i>
+                        <h1 class="text-xl font-bold ml-2 text-gray-800">Gestor de Negócios</h1>
+                    </div>
+                    <div class="hidden md:block">
+                        <nav id="nav-desktop" class="flex items-center space-x-4">
+                            <a href="#dashboard" class="tab-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600" data-tab="dashboard">Início</a>
+                            <a href="#orders" class="tab-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600" data-tab="orders">Orçamentos e Pedidos</a>
+                            <a href="#products" class="tab-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600" data-tab="products">Produtos</a>
+                            <a href="#customers" class="tab-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600" data-tab="customers">Clientes</a>
+                        </nav>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Abas de Navegação -->
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-8">
-            <nav class="-mb-px flex items-center space-x-8" aria-label="Tabs">
-                <button id="btn-home" title="Início" class="py-4 text-gray-500 dark:text-gray-400 hover:text-primary-600 transition-colors duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                       <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                    </svg>
-                </button>
-                <div class="relative" id="menu-cadastros">
-                    <button id="tab-cadastros" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-300 transition-colors duration-200 flex items-center gap-1">
-                        Cadastros
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                    <!-- Dropdown Menu -->
-                    <div id="dropdown-cadastros" class="dropdown-menu origin-top-left absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none hidden opacity-0 transform scale-95" role="menu" aria-orientation="vertical">
-                        <div class="py-1" role="none">
-                            <a href="#" id="link-products" class="text-gray-700 dark:text-gray-200 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600" role="menuitem">Produtos</a>
-                            <a href="#" id="link-clients" class="text-gray-700 dark:text-gray-200 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600" role="menuitem">Clientes</a>
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="tab-content">
+                <h2 class="text-2xl font-bold mb-6 text-gray-900">Painel de Controle</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex items-center">
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i data-lucide="file-text" class="h-6 w-6 text-blue-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Total de Pedidos</p>
+                            <p id="total-orders-stat" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                    <div class="bg-green-100 p-6 rounded-lg shadow-sm flex items-center">
+                        <div class="bg-green-200 p-3 rounded-full">
+                            <i data-lucide="package" class="h-6 w-6 text-green-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Produtos Cadastrados</p>
+                            <p id="total-products-stat" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-100 p-6 rounded-lg shadow-sm flex items-center">
+                        <div class="bg-yellow-200 p-3 rounded-full">
+                            <i data-lucide="users" class="h-6 w-6 text-yellow-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Clientes</p>
+                            <p id="total-customers-stat" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                     <div class="bg-indigo-100 p-6 rounded-lg shadow-sm flex items-center">
+                        <div class="bg-indigo-200 p-3 rounded-full">
+                            <i data-lucide="dollar-sign" class="h-6 w-6 text-indigo-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Faturamento (Faturado)</p>
+                            <p id="total-revenue-stat" class="text-2xl font-bold text-gray-900">R$ 0,00</p>
                         </div>
                     </div>
                 </div>
-                <button id="tab-quotes" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-300 transition-colors duration-200">
-                    Orçamentos
-                </button>
-            </nav>
-        </div>
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4">Ações Rápidas</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="openOrderModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"><i data-lucide="plus" class="mr-2 h-5 w-5"></i>Novo Pedido</button>
+                        <button onclick="openProductModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"><i data-lucide="plus" class="mr-2 h-5 w-5"></i>Novo Produto</button>
+                        <button onclick="openCustomerModal()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 flex items-center"><i data-lucide="plus" class="mr-2 h-5 w-5"></i>Novo Cliente</button>
+                    </div>
+                </div>
+            </section>
 
-        <!-- Conteúdo das Abas -->
-        <main>
-            <!-- Seção Home (Dashboard) -->
-            <div id="content-home">
-                <!-- Cards de Métricas -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex items-center gap-4">
-                        <div class="bg-primary-100 dark:bg-primary-800/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg></div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Total de Produtos</p>
-                            <p id="stats-total-products" class="text-2xl font-bold text-gray-800 dark:text-gray-100">0</p>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex items-center gap-4">
-                        <div class="bg-primary-100 dark:bg-primary-800/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.975 5.975 0 0112 13a5.975 5.975 0 013 5.197" /></svg></div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Total de Clientes</p>
-                            <p id="stats-total-clients" class="text-2xl font-bold text-gray-800 dark:text-gray-100">0</p>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex items-center gap-4">
-                        <div class="bg-primary-100 dark:bg-primary-800/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v.01M12 18v-2m0-2v-2m0-2v-2m0-2V7m0 0V6" /></svg></div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Valor em Orçamentos</p>
-                            <p id="stats-total-quotes-value" class="text-2xl font-bold text-gray-800 dark:text-gray-100">R$ 0,00</p>
-                        </div>
-                    </div>
+            <!-- Orders Section -->
+            <section id="orders" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Orçamentos e Pedidos</h2>
+                    <button onclick="openOrderModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"><i data-lucide="plus" class="mr-2 h-5 w-5"></i>Novo Pedido</button>
                 </div>
+                <div id="orders-list" class="bg-white rounded-lg shadow-sm overflow-x-auto"></div>
+            </section>
 
-                <!-- Gráficos -->
-                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                    <div class="lg:col-span-3 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                        <h3 class="text-lg font-semibold mb-4">Orçamentos por Mês</h3>
-                        <canvas id="monthlyQuotesChart"></canvas>
-                    </div>
-                    <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                        <h3 class="text-lg font-semibold mb-4">Produtos mais Orçados</h3>
-                        <canvas id="topProductsChart"></canvas>
-                    </div>
+            <!-- Products Section -->
+            <section id="products" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Produtos</h2>
+                    <button onclick="openProductModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"><i data-lucide="plus" class="mr-2 h-5 w-5"></i>Novo Produto</button>
                 </div>
-            </div>
+                <div id="products-list" class="bg-white rounded-lg shadow-sm overflow-x-auto"></div>
+            </section>
 
-            <!-- Seção de Produtos -->
-            <div id="content-products" class="hidden">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-5 gap-4">
-                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Produtos</h2>
-                        <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-                            <input type="text" id="product-search" placeholder="Pesquisar por código, descrição..." class="w-full sm:w-64 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                            <button id="btn-add-product" class="w-full sm:w-auto bg-primary-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-600 transition whitespace-nowrap">
-                                Incluir Cadastro
-                            </button>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <div class="min-w-full">
-                            <div class="grid grid-cols-14 gap-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase border-b dark:border-gray-700 pb-3">
-                                <div class="col-span-1"></div>
-                                <div class="col-span-1">Imagem</div>
-                                <div class="col-span-4">Descrição</div>
-                                <div class="col-span-2">Código</div>
-                                <div class="col-span-1 text-center">Unid.</div>
-                                <div class="col-span-2 text-right">Preço</div>
-                                <div class="col-span-2 text-right">Estoque</div>
-                                <div class="col-span-1 text-center">Ações</div>
-                            </div>
-                            <div id="products-list" class="mt-2 space-y-1"></div>
-                        </div>
-                    </div>
+            <!-- Customers Section -->
+            <section id="customers" class="tab-content hidden">
+                 <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Clientes</h2>
+                    <button onclick="openCustomerModal()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 flex items-center"><i data-lucide="plus" class="mr-2 h-5 w-5"></i>Novo Cliente</button>
                 </div>
-            </div>
-
-            <!-- Seção de Clientes -->
-            <div id="content-clients" class="hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1">
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                            <h2 class="text-2xl font-semibold mb-5 text-gray-800 dark:text-gray-100">Adicionar Cliente</h2>
-                            <form id="form-add-client" class="space-y-4">
-                                <div>
-                                    <label for="client-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nome</label>
-                                    <input type="text" id="client-name" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                                <div>
-                                    <label for="client-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">E-mail</label>
-                                    <input type="email" id="client-email" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                                <div>
-                                    <label for="client-phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefone</label>
-                                    <input type="tel" id="client-phone" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                                <button type="submit" class="w-full bg-primary-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-primary-600 transition">Salvar Cliente</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-2">
-                         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                            <h2 class="text-2xl font-semibold mb-5 text-gray-800 dark:text-gray-100">Lista de Clientes</h2>
-                            <div id="clients-list" class="space-y-3 max-h-[65vh] overflow-y-auto pr-2"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Seção de Orçamentos -->
-            <div id="content-quotes" class="hidden">
-                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1">
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                            <h2 class="text-2xl font-semibold mb-5 text-gray-800 dark:text-gray-100">Criar Orçamento</h2>
-                            <form id="form-create-quote" class="space-y-4">
-                                <div>
-                                    <label for="quote-client-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
-                                    <select id="quote-client-select" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white"></select>
-                                </div>
-                                 <div class="border-t dark:border-gray-700 pt-4">
-                                     <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100">Itens do Orçamento</h3>
-                                     <div id="quote-items-list" class="mt-2 space-y-2 max-h-48 overflow-y-auto"></div>
-                                     <div id="quote-total" class="mt-4 text-right font-bold text-2xl text-gray-800 dark:text-gray-100">Total: R$ 0,00</div>
-                                </div>
-                                <div class="flex flex-col space-y-3 pt-2">
-                                    <button type="button" id="btn-add-item" class="w-full bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition duration-200">Adicionar Item</button>
-                                    <button type="submit" class="w-full bg-primary-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-primary-600 transition">Salvar Orçamento</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-2">
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                            <h2 class="text-2xl font-semibold mb-5 text-gray-800 dark:text-gray-100">Orçamentos Salvos</h2>
-                            <div id="quotes-list" class="space-y-4 max-h-[65vh] overflow-y-auto pr-2"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <div id="customers-list" class="bg-white rounded-lg shadow-sm overflow-x-auto"></div>
+            </section>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-product" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop opacity-0">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl m-4 modal-content transform scale-95">
-            <form id="form-product">
-                <div class="p-6">
-                    <h3 id="modal-product-title" class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Incluir Cadastro</h3>
-                    <!-- Abas do Modal -->
-                    <div class="border-b border-gray-200 dark:border-gray-700">
-                        <nav class="-mb-px flex space-x-6" id="modal-product-tabs">
-                            <button type="button" data-tab="geral" class="modal-tab modal-tab-active">Dados Gerais</button>
-                            <button type="button" data-tab="estoque" class="modal-tab">Estoque</button>
-                            <button type="button" data-tab="dimensoes" class="modal-tab">Dimensões</button>
-                        </nav>
-                    </div>
-                    
-                    <!-- Conteúdo das Abas -->
-                    <div class="mt-6">
-                        <!-- Aba Dados Gerais -->
-                        <div id="tab-content-geral">
-                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                <div class="sm:col-span-1 flex flex-col items-center">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Imagem</label>
-                                    <img id="product-image-preview" src="https://placehold.co/200x200/e2e8f0/94a3b8?text=Foto" class="h-40 w-40 rounded-md object-cover bg-gray-200 dark:bg-gray-700">
-                                    <input type="file" id="product-image-upload" accept="image/*" class="hidden">
-                                    <button type="button" id="btn-upload-image" class="mt-3 w-full bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 text-sm font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition">Selecionar Foto</button>
-                                </div>
-                                <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div class="sm:col-span-2">
-                                        <label for="product-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nome</label>
-                                        <input type="text" id="product-name" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                    </div>
-                                    <div>
-                                        <label for="product-code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Código (SKU)</label>
-                                        <input type="text" id="product-code" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                    </div>
-                                    <div>
-                                        <label for="product-price" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preço Venda (R$)</label>
-                                        <input type="number" id="product-price" step="0.01" min="0" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                    </div>
-                                    <div>
-                                        <label for="product-unit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unidade</label>
-                                        <input type="text" id="product-unit" placeholder="UN, KG, PC..." class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                    </div>
-                                     <div>
-                                        <label for="product-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
-                                        <select id="product-type" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                            <option>Produto</option>
-                                            <option>Serviço</option>
-                                        </select>
-                                    </div>
-                                    <div class="sm:col-span-2">
-                                        <label for="product-status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Situação</label>
-                                        <div class="mt-2 flex items-center">
-                                            <label for="product-status-toggle" class="flex items-center cursor-pointer">
-                                                <div class="relative">
-                                                    <input type="checkbox" id="product-status-toggle" class="sr-only" checked>
-                                                    <div class="block bg-gray-200 dark:bg-gray-600 w-12 h-6 rounded-full toggle-bg"></div>
-                                                </div>
-                                                <div class="ml-3 text-gray-700 dark:text-gray-300 font-medium text-sm" id="product-status-label">Ativo</div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Aba Estoque -->
-                        <div id="tab-content-estoque" class="hidden">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="product-stock" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estoque Atual</label>
-                                    <input type="number" id="product-stock" min="0" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                                <div>
-                                    <label for="product-location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Localização</label>
-                                    <input type="text" id="product-location" placeholder="Ex: Corredor A, Prateleira 3" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Aba Dimensões -->
-                        <div id="tab-content-dimensoes" class="hidden">
-                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div>
-                                    <label for="product-weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Peso (kg)</label>
-                                    <input type="number" id="product-weight" step="0.001" min="0" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                                <div>
-                                    <label for="product-width" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Largura (cm)</label>
-                                    <input type="number" id="product-width" step="0.01" min="0" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                                 <div>
-                                    <label for="product-height" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Altura (cm)</label>
-                                    <input type="number" id="product-height" step="0.01" min="0" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                                 <div>
-                                    <label for="product-depth" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Profundidade (cm)</label>
-                                    <input type="number" id="product-depth" step="0.01" min="0" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-3 flex justify-end space-x-3 rounded-b-xl">
-                    <button type="button" id="btn-modal-product-cancel" class="bg-white dark:bg-gray-600 dark:text-gray-200 py-2 px-4 border dark:border-gray-500 border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none">Cancelar</button>
-                    <button type="submit" class="bg-primary-500 text-white py-2 px-4 rounded-md hover:bg-primary-600">Salvar Produto</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-add-item" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop opacity-0">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md m-4 modal-content transform scale-95">
-            <div class="p-6">
-                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Adicionar Item</h3>
-                <form id="form-add-item-to-quote">
-                    <div class="space-y-4">
-                        <div>
-                            <label for="modal-product-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Selecione o Produto</label>
-                            <select id="modal-product-select" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:text-white"></select>
+    <!-- Order/Budget Modal -->
+    <div id="orderModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center z-30">
+        <div class="relative mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 id="orderModalTitle" class="text-lg leading-6 font-medium text-gray-900 text-center">Criar Novo Pedido/Orçamento</h3>
+                <form id="orderForm" class="mt-2 px-7 py-3 space-y-4 text-left">
+                    <input type="hidden" id="editingOrderId" value="">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label for="orderCustomer" class="text-sm font-medium">Cliente</label>
+                            <select id="orderCustomer" class="w-full p-2 border border-gray-300 rounded-md mt-1" required></select>
                         </div>
                         <div>
-                            <label for="modal-item-quantity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantidade</label>
-                            <input type="number" id="modal-item-quantity" value="1" min="1" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
+                           <label for="orderType" class="text-sm font-medium">Tipo</label>
+                            <select id="orderType" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                                <option value="Orçamento">Orçamento</option>
+                                <option value="Pedido">Pedido</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" id="btn-modal-cancel" class="bg-white dark:bg-gray-600 dark:text-gray-200 py-2 px-4 border dark:border-gray-500 border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none">Cancelar</button>
-                        <button type="submit" class="bg-primary-500 text-white py-2 px-4 rounded-md hover:bg-primary-600">Adicionar</button>
+                     <div>
+                        <label for="orderStatus" class="text-sm font-medium">Status</label>
+                        <select id="orderStatus" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                            <option value="Aberto">Aberto</option>
+                            <option value="Faturado">Faturado</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="border-t pt-4">
+                        <h4 class="font-semibold">Itens do Pedido</h4>
+                        <div id="orderItemsContainer" class="mt-2 space-y-2 max-h-48 overflow-y-auto pr-2"></div>
+                        <div class="flex items-center space-x-2 mt-2">
+                             <select id="productSelector" class="flex-grow p-2 border border-gray-300 rounded-md"></select>
+                             <input type="number" id="itemQuantity" value="1" min="1" class="w-20 p-2 border border-gray-300 rounded-md">
+                             <button type="button" id="addOrderItem" class="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">Adicionar</button>
+                        </div>
+                    </div>
+                    <div class="text-right font-bold text-xl mt-4">
+                        Total: <span id="orderTotal">R$ 0,00</span>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button type="submit" class="w-full bg-blue-600 text-white text-base font-medium px-4 py-2 rounded-lg hover:bg-blue-700">Salvar Pedido</button>
+                        <button type="button" onclick="closeModal('orderModal')" class="mt-2 w-full bg-gray-200 text-gray-800 text-base font-medium px-4 py-2 rounded-lg hover:bg-gray-300">Cancelar</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-crm-app';
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        let userId = null;
-        let products = [];
-        let clients = [];
-        let quotes = [];
-        let currentQuoteItems = [];
-        let monthlyQuotesChart = null;
-        let topProductsChart = null;
-        let currentImageBase64 = null;
-
-        // --- Elementos do DOM ---
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const btnHome = document.getElementById('btn-home');
-        const tabQuotes = document.getElementById('tab-quotes');
-        const tabCadastros = document.getElementById('tab-cadastros');
-        const dropdownCadastros = document.getElementById('dropdown-cadastros');
-        const menuCadastros = document.getElementById('menu-cadastros');
-        const linkProducts = document.getElementById('link-products');
-        const linkClients = document.getElementById('link-clients');
-        const contentHome = document.getElementById('content-home');
-        const contentQuotes = document.getElementById('content-quotes');
-        const contentProducts = document.getElementById('content-products');
-        const contentClients = document.getElementById('content-clients');
-        const productsList = document.getElementById('products-list');
-        const productSearchInput = document.getElementById('product-search');
-        const btnAddProduct = document.getElementById('btn-add-product');
-        const modalProduct = document.getElementById('modal-product');
-        const modalProductContent = modalProduct.querySelector('.modal-content');
-        const formProduct = document.getElementById('form-product');
-        const btnModalProductCancel = document.getElementById('btn-modal-product-cancel');
-        const productImagePreview = document.getElementById('product-image-preview');
-        const productImageUpload = document.getElementById('product-image-upload');
-        const btnUploadImage = document.getElementById('btn-upload-image');
-        const modalProductTabs = document.getElementById('modal-product-tabs');
-        const productStatusToggle = document.getElementById('product-status-toggle');
-        const productStatusLabel = document.getElementById('product-status-label');
-        const formAddClient = document.getElementById('form-add-client');
-        const clientsList = document.getElementById('clients-list');
-        const quotesList = document.getElementById('quotes-list');
-        const formCreateQuote = document.getElementById('form-create-quote');
-        const quoteClientSelect = document.getElementById('quote-client-select');
-        const btnAddItem = document.getElementById('btn-add-item');
-        const modalAddItem = document.getElementById('modal-add-item');
-        const btnModalCancel = document.getElementById('btn-modal-cancel');
-        const formAddItemToQuote = document.getElementById('form-add-item-to-quote');
-        const modalProductSelect = document.getElementById('modal-product-select');
-        const quoteItemsList = document.getElementById('quote-items-list');
-        const quoteTotalEl = document.getElementById('quote-total');
-        const authStatusEl = document.getElementById('auth-status');
-        const trashIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>`;
-        const imagePlaceholderIcon = `<svg class="w-full h-full text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>`;
-
-        // --- LÓGICA DO TEMA ---
-        function applyTheme(theme) {
-            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                themeToggleLightIcon.classList.remove('hidden');
-                themeToggleDarkIcon.classList.add('hidden');
-            } else {
-                document.documentElement.classList.remove('dark');
-                themeToggleDarkIcon.classList.remove('hidden');
-                themeToggleLightIcon.classList.add('hidden');
-            }
-            updateDashboard();
-        }
-        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        applyTheme(savedTheme);
-        themeToggleBtn.addEventListener('click', () => {
-            const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
-        });
-
-        // --- AUTENTICAÇÃO E INICIALIZAÇÃO ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                authStatusEl.innerHTML = ``;
-                loadProducts();
-                loadClients();
-                loadQuotes();
-                switchTab('home');
-            } else {
-                try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else { await signInAnonymously(auth); }
-                } catch (error) { console.error("Erro na autenticação:", error); authStatusEl.textContent = 'Erro de conexão.'; }
-            }
-        });
-
-        // --- LÓGICA DE NAVEGAÇÃO ---
-        function switchTab(tabName) {
-            [contentHome, contentQuotes, contentProducts, contentClients].forEach(c => c.classList.add('hidden'));
-            [tabQuotes, tabCadastros].forEach(t => t.classList.remove('tab-active'));
-            if (tabName === 'home') contentHome.classList.remove('hidden');
-            else if (tabName === 'quotes') { contentQuotes.classList.remove('hidden'); tabQuotes.classList.add('tab-active'); } 
-            else if (tabName === 'products') { contentProducts.classList.remove('hidden'); tabCadastros.classList.add('tab-active'); } 
-            else if (tabName === 'clients') { contentClients.classList.remove('hidden'); tabCadastros.classList.add('tab-active'); }
-        }
-        const toggleDropdown = () => {
-            const isHidden = dropdownCadastros.classList.contains('hidden');
-            if (isHidden) {
-                dropdownCadastros.classList.remove('hidden');
-                setTimeout(() => dropdownCadastros.classList.remove('opacity-0', 'scale-95'), 10);
-            } else {
-                dropdownCadastros.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => dropdownCadastros.classList.add('hidden'), 200);
-            }
-        };
-        btnHome.addEventListener('click', () => switchTab('home'));
-        tabCadastros.addEventListener('click', toggleDropdown);
-        window.addEventListener('click', (e) => { if (!menuCadastros.contains(e.target) && !dropdownCadastros.classList.contains('hidden')) toggleDropdown(); });
-        tabQuotes.addEventListener('click', () => switchTab('quotes'));
-        linkProducts.addEventListener('click', (e) => { e.preventDefault(); switchTab('products'); toggleDropdown(); });
-        linkClients.addEventListener('click', (e) => { e.preventDefault(); switchTab('clients'); toggleDropdown(); });
-
-        // --- LÓGICA DO DASHBOARD ---
-        function updateDashboard() {
-            if (!document.documentElement) return;
-            const isDarkMode = document.documentElement.classList.contains('dark');
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const textColor = isDarkMode ? '#e5e7eb' : '#374151';
-
-            document.getElementById('stats-total-products').textContent = products.length;
-            document.getElementById('stats-total-clients').textContent = clients.length;
-            const totalQuotesValue = quotes.reduce((sum, quote) => sum + quote.total, 0);
-            document.getElementById('stats-total-quotes-value').textContent = `R$ ${totalQuotesValue.toFixed(2)}`;
-
-            const monthlyData = quotes.reduce((acc, quote) => {
-                if (quote.createdAt) {
-                    const month = new Date(quote.createdAt.seconds * 1000).toLocaleString('default', { month: 'short', year: '2-digit' });
-                    acc[month] = (acc[month] || 0) + quote.total;
-                }
-                return acc;
-            }, {});
-            const monthlyLabels = Object.keys(monthlyData).reverse();
-            const monthlyValues = monthlyLabels.map(label => monthlyData[label]);
-
-            const monthlyCtx = document.getElementById('monthlyQuotesChart').getContext('2d');
-            if (monthlyQuotesChart) monthlyQuotesChart.destroy();
-            monthlyQuotesChart = new Chart(monthlyCtx, {
-                type: 'bar', data: { labels: monthlyLabels, datasets: [{ label: 'Valor em R$', data: monthlyValues, backgroundColor: 'rgba(245, 158, 11, 0.5)', borderColor: 'rgba(245, 158, 11, 1)', borderWidth: 1 }] },
-                options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } }, x: { ticks: { color: textColor }, grid: { color: gridColor } } }, plugins: { legend: { labels: { color: textColor } } } }
-            });
-
-            const productCounts = quotes.flatMap(q => q.items).reduce((acc, item) => { acc[item.name] = (acc[item.name] || 0) + item.quantity; return acc; }, {});
-            const sortedProducts = Object.entries(productCounts).sort(([,a],[,b]) => b-a).slice(0, 5);
-            const topProductsLabels = sortedProducts.map(([name]) => name);
-            const topProductsValues = sortedProducts.map(([,count]) => count);
-
-            const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
-            if (topProductsChart) topProductsChart.destroy();
-            topProductsChart = new Chart(topProductsCtx, {
-                type: 'doughnut', data: { labels: topProductsLabels, datasets: [{ label: 'Quantidade', data: topProductsValues, backgroundColor: ['#d97706', '#f59e0b', '#fbbf24', '#fcd34d', '#fde68a'], borderColor: isDarkMode ? '#1f2937' : '#ffffff', borderWidth: 2, }] },
-                options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: textColor } } } }
-            });
-        }
-
-        // --- LÓGICA DE PRODUTOS ---
-        function toggleProductModal(show) {
-            if (show) {
-                modalProduct.classList.remove('hidden');
-                setTimeout(() => { modalProduct.classList.remove('opacity-0'); modalProductContent.classList.remove('scale-95'); }, 10);
-            } else {
-                modalProduct.classList.add('opacity-0');
-                modalProductContent.classList.add('scale-95');
-                setTimeout(() => modalProduct.classList.add('hidden'), 300);
-            }
-        }
-        btnAddProduct.addEventListener('click', () => {
-            formProduct.reset();
-            currentImageBase64 = null;
-            productImagePreview.src = 'https://placehold.co/200x200/e2e8f0/94a3b8?text=Foto';
-            document.getElementById('modal-product-title').textContent = 'Incluir Cadastro';
-            productStatusToggle.checked = true;
-            productStatusLabel.textContent = 'Ativo';
-            switchProductModalTab('geral');
-            toggleProductModal(true);
-        });
-        btnModalProductCancel.addEventListener('click', () => toggleProductModal(false));
-        btnUploadImage.addEventListener('click', () => productImageUpload.click());
-        productImageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    currentImageBase64 = event.target.result;
-                    productImagePreview.src = currentImageBase64;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-        productStatusToggle.addEventListener('change', (e) => {
-            productStatusLabel.textContent = e.target.checked ? 'Ativo' : 'Inativo';
-        });
-
-        function switchProductModalTab(tabId) {
-            const tabs = modalProductTabs.querySelectorAll('button');
-            const contents = modalProduct.querySelectorAll('[id^="tab-content-"]');
-            tabs.forEach(tab => {
-                tab.classList.toggle('modal-tab-active', tab.dataset.tab === tabId);
-            });
-            contents.forEach(content => {
-                content.classList.toggle('hidden', content.id !== `tab-content-${tabId}`);
-            });
-        }
-        modalProductTabs.addEventListener('click', (e) => {
-            if(e.target.tagName === 'BUTTON') {
-                switchProductModalTab(e.target.dataset.tab);
-            }
-        });
-
-        function loadProducts() {
-            if (!userId) return;
-            const q = query(collection(db, `artifacts/${appId}/users/${userId}/products`), orderBy("name"));
-            onSnapshot(q, (snapshot) => {
-                products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProducts(products);
-                populateProductSelect();
-                updateDashboard();
-            });
-        }
-        
-        function renderProducts(productsToRender) {
-            productsList.innerHTML = productsToRender.length === 0 ? `<div class="text-gray-500 dark:text-gray-400 text-center py-8 col-span-14">Nenhum produto encontrado.</div>` : '';
-            productsToRender.forEach(product => {
-                const el = document.createElement('div');
-                el.className = 'grid grid-cols-14 gap-4 items-center bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg border border-transparent hover:border-primary-500/50 transition-colors text-sm';
-                const imageHtml = product.imageUrl 
-                    ? `<img src="${product.imageUrl}" class="h-10 w-10 rounded-md object-cover">`
-                    : `<div class="h-10 w-10 rounded-md bg-gray-200 dark:bg-gray-600 flex items-center justify-center">${imagePlaceholderIcon}</div>`;
-                const statusDot = `<div class="w-3 h-3 rounded-full ${product.status ? 'bg-green-500' : 'bg-gray-400'}"></div>`;
-
-                el.innerHTML = `
-                    <div class="col-span-1 flex justify-center">${statusDot}</div>
-                    <div class="col-span-1">${imageHtml}</div>
-                    <div class="col-span-4"><p class="font-semibold text-gray-800 dark:text-gray-100">${product.name}</p><p class="text-xs text-gray-500 dark:text-gray-400">${product.description || ''}</p></div>
-                    <div class="col-span-2 text-gray-600 dark:text-gray-300">${product.code || '-'}</div>
-                    <div class="col-span-1 text-center text-gray-600 dark:text-gray-300">${product.unit || '-'}</div>
-                    <div class="col-span-2 text-right font-medium text-gray-800 dark:text-gray-200">R$ ${parseFloat(product.price || 0).toFixed(2)}</div>
-                    <div class="col-span-2 text-right font-medium ${ (product.stock || 0) > 0 ? 'text-green-600' : 'text-red-500'}">${product.stock || 0}</div>
-                    <div class="col-span-1 text-center"><button class="btn-delete-product text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">${trashIcon}</button></div>`;
-                el.querySelector('.btn-delete-product').addEventListener('click', () => deleteItem('products', product.id, 'produto'));
-                productsList.appendChild(el);
-            });
-        }
-        
-        productSearchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm) || (p.description && p.description.toLowerCase().includes(searchTerm)) || (p.code && p.code.toLowerCase().includes(searchTerm)));
-            renderProducts(filteredProducts);
-        });
-
-        formProduct.addEventListener('submit', async (e) => {
-            e.preventDefault(); if (!userId) return;
-            const productData = {
-                name: formProduct['product-name'].value,
-                description: formProduct['product-description'].value,
-                code: formProduct['product-code'].value,
-                price: parseFloat(formProduct['product-price'].value) || 0,
-                unit: formProduct['product-unit'].value,
-                type: formProduct['product-type'].value,
-                status: productStatusToggle.checked,
-                stock: parseInt(formProduct['product-stock'].value) || 0,
-                location: formProduct['product-location'].value,
-                weight: parseFloat(formProduct['product-weight'].value) || 0,
-                width: parseFloat(formProduct['product-width'].value) || 0,
-                height: parseFloat(formProduct['product-height'].value) || 0,
-                depth: parseFloat(formProduct['product-depth'].value) || 0,
-                imageUrl: currentImageBase64
-            };
-            try { await addDoc(collection(db, `artifacts/${appId}/users/${userId}/products`), productData); toggleProductModal(false); } 
-            catch (error) { console.error("Erro ao salvar produto: ", error); }
-        });
-
-        // --- LÓGICA DE CLIENTES ---
-        function loadClients() {
-            if (!userId) return;
-            const q = query(collection(db, `artifacts/${appId}/users/${userId}/clients`), orderBy("name"));
-            onSnapshot(q, (snapshot) => {
-                clients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderClients();
-                populateClientSelect();
-                updateDashboard();
-            });
-        }
-        function renderClients() {
-            clientsList.innerHTML = clients.length === 0 ? '<p class="text-gray-500 dark:text-gray-400 text-center py-4">Nenhum cliente cadastrado.</p>' : '';
-            clients.forEach(client => {
-                const el = document.createElement('div');
-                el.className = 'flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border dark:border-gray-700';
-                el.innerHTML = `
-                    <div><p class="font-semibold dark:text-gray-100">${client.name}</p><p class="text-sm text-gray-600 dark:text-gray-300">${client.email || 'Sem e-mail'}</p><p class="text-sm text-gray-600 dark:text-gray-300">${client.phone || 'Sem telefone'}</p></div>
-                    <button class="btn-delete text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">${trashIcon}</button>`;
-                el.querySelector('.btn-delete').addEventListener('click', () => deleteItem('clients', client.id, 'cliente'));
-                clientsList.appendChild(el);
-            });
-        }
-        formAddClient.addEventListener('submit', async (e) => {
-            e.preventDefault(); if (!userId) return;
-            try { await addDoc(collection(db, `artifacts/${appId}/users/${userId}/clients`), { name: formAddClient['client-name'].value, email: formAddClient['client-email'].value, phone: formAddClient['client-phone'].value }); formAddClient.reset(); } 
-            catch (error) { console.error("Erro ao adicionar cliente: ", error); }
-        });
-        
-        async function deleteItem(collectionName, id, itemName) {
-            if (confirm(`Tem certeza que deseja excluir este ${itemName}?`)) {
-                try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/${collectionName}`, id)); } 
-                catch (error) { console.error(`Erro ao deletar ${itemName}:`, error); }
-            }
-        }
-
-        // --- LÓGICA DE ORÇAMENTOS ---
-        function loadQuotes() {
-            if (!userId) return;
-            const q = query(collection(db, `artifacts/${appId}/users/${userId}/quotes`), orderBy("createdAt", "desc"));
-            onSnapshot(q, (snapshot) => {
-                quotes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderQuotes(quotes);
-                updateDashboard();
-            });
-        }
-        function toggleQuoteItemModal(show) { if (show) { modalAddItem.classList.remove('hidden'); setTimeout(() => { modalAddItem.classList.remove('opacity-0'); modalAddItem.querySelector('.modal-content').classList.remove('scale-95'); }, 10); } else { modalAddItem.classList.add('opacity-0'); modalAddItem.querySelector('.modal-content').classList.add('scale-95'); setTimeout(() => modalAddItem.classList.add('hidden'), 300); } }
-        btnAddItem.addEventListener('click', () => toggleQuoteItemModal(true));
-        btnModalCancel.addEventListener('click', () => toggleQuoteItemModal(false));
-        function populateProductSelect() { modalProductSelect.innerHTML = '<option value="" disabled selected>Selecione...</option>'; products.forEach(p => modalProductSelect.add(new Option(`${p.name} - R$ ${parseFloat(p.price).toFixed(2)}`, p.id))); }
-        function populateClientSelect() { quoteClientSelect.innerHTML = '<option value="" disabled selected>Selecione um cliente...</option>'; clients.forEach(c => quoteClientSelect.add(new Option(c.name, c.id))); }
-        formAddItemToQuote.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const product = products.find(p => p.id === modalProductSelect.value);
-            const quantity = parseInt(formAddItemToQuote['modal-item-quantity'].value);
-            if (!product || !quantity) return;
-            const existingItem = currentQuoteItems.find(item => item.productId === product.id);
-            if (existingItem) existingItem.quantity += quantity;
-            else currentQuoteItems.push({ productId: product.id, name: product.name, price: parseFloat(product.price), quantity });
-            renderCurrentQuoteItems();
-            toggleQuoteItemModal(false);
-            formAddItemToQuote.reset();
-            formAddItemToQuote['modal-item-quantity'].value = 1;
-        });
-        function renderCurrentQuoteItems() {
-            quoteItemsList.innerHTML = ''; let total = 0;
-            if (currentQuoteItems.length === 0) {
-                 quoteItemsList.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 text-center py-2">Nenhum item adicionado.</p>';
-                 quoteTotalEl.textContent = 'Total: R$ 0,00'; return;
-            }
-            currentQuoteItems.forEach((item, index) => {
-                const itemEl = document.createElement('div');
-                itemEl.className = 'flex justify-between items-center text-sm p-2 bg-gray-100 dark:bg-gray-700 rounded-md';
-                const itemTotal = item.price * item.quantity; total += itemTotal;
-                itemEl.innerHTML = `<div><span class="font-medium">${item.quantity}x</span> ${item.name}</div><div class="flex items-center space-x-2"><span class="font-semibold">R$ ${itemTotal.toFixed(2)}</span><button class="btn-remove-quote-item text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">&times;</button></div>`;
-                itemEl.querySelector('.btn-remove-quote-item').addEventListener('click', () => { currentQuoteItems.splice(index, 1); renderCurrentQuoteItems(); });
-                quoteItemsList.appendChild(itemEl);
-            });
-            quoteTotalEl.textContent = `Total: R$ ${total.toFixed(2)}`;
-        }
-        formCreateQuote.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const client = clients.find(c => c.id === quoteClientSelect.value);
-            if (!userId || !client || currentQuoteItems.length === 0) { alert('Por favor, selecione um cliente e adicione itens ao orçamento.'); return; }
-            const total = currentQuoteItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            try {
-                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/quotes`), { clientId: client.id, clientName: client.name, items: currentQuoteItems, total, createdAt: serverTimestamp() });
-                currentQuoteItems = []; renderCurrentQuoteItems(); formCreateQuote.reset();
-            } catch (error) { console.error("Erro ao salvar orçamento: ", error); }
-        });
-        function renderQuotes(savedQuotes) {
-            quotesList.innerHTML = savedQuotes.length === 0 ? '<p class="text-gray-500 dark:text-gray-400 text-center py-4">Nenhum orçamento salvo.</p>' : '';
-            savedQuotes.forEach(quote => {
-                const el = document.createElement('div');
-                el.className = 'bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border dark:border-gray-700';
-                const date = quote.createdAt ? new Date(quote.createdAt.seconds * 1000).toLocaleDateString('pt-BR') : 'Data indisponível';
-                let itemsHtml = quote.items.map(item => `<li class="ml-4">${item.quantity}x ${item.name}</li>`).join('');
-                el.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div><p class="font-semibold text-lg dark:text-gray-100">${quote.clientName}</p><p class="text-sm text-gray-500 dark:text-gray-400">${date}</p></div>
-                        <p class="font-bold text-xl text-primary-700 dark:text-primary-500">R$ ${quote.total.toFixed(2)}</p>
+    <!-- Product Modal -->
+    <div id="productModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center z-30">
+        <div class="relative mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+            <form id="productForm">
+                <input type="hidden" id="editingProductId">
+                <div class="flex justify-between items-center pb-3 border-b">
+                    <div>
+                        <h3 id="productModalTitle" class="text-xl leading-6 font-bold text-gray-900">Novo Produto</h3>
+                        <p id="productModalSubtitle" class="text-sm text-gray-500">Preencha os detalhes do produto abaixo.</p>
                     </div>
-                    <div class="mt-3 border-t dark:border-gray-600 pt-3"><p class="text-sm font-medium dark:text-gray-200">Itens:</p><ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 mt-1">${itemsHtml}</ul></div>
-                     <div class="text-right mt-3"><button class="btn-delete text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">${trashIcon}</button></div>`;
-                el.querySelector('.btn-delete').addEventListener('click', () => deleteItem('quotes', quote.id, 'orçamento'));
-                quotesList.appendChild(el);
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="closeModal('productModal')" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Cancelar</button>
+                        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Salvar Produto</button>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div>
+                        <label for="productName" class="text-sm font-medium">Nome do Produto</label>
+                        <input type="text" id="productName" class="w-full p-2 border border-gray-300 rounded-md mt-1" placeholder="Ex: Camiseta Branca" required>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-4">
+                        <div class="md:col-span-1 flex flex-col items-center">
+                            <div class="w-40 h-40 bg-gray-200 rounded-md flex items-center justify-center">
+                                <i data-lucide="image" class="h-16 w-16 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="productSku" class="text-sm font-medium">Código (SKU)</label>
+                                <input type="text" id="productSku" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                            </div>
+                            <div>
+                                <label for="productFormat" class="text-sm font-medium">Formato</label>
+                                <select id="productFormat" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                                    <option>Simples</option>
+                                    <option>Com Variações</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="productType" class="text-sm font-medium">Tipo</label>
+                                <select id="productType" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                                    <option>Produto</option>
+                                    <option>Serviço</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center space-x-2 pt-5">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                  <input type="checkbox" id="productStatus" class="sr-only peer">
+                                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                  <span class="ml-3 text-sm font-medium text-gray-900" id="productStatusLabel">Inativo</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label for="productPrice" class="text-sm font-medium">Preço Venda</label>
+                                <input type="number" id="productPrice" step="0.01" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                            </div>
+                             <div>
+                                <label for="productUnit" class="text-sm font-medium">Unidade</label>
+                                <input type="text" id="productUnit" value="UN" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t pt-4">
+                    <h4 class="font-semibold text-gray-700 mb-2">Características Físicas e Estoque</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label for="productWeight" class="text-sm font-medium">Peso Líquido</label>
+                            <input type="number" id="productWeight" step="0.001" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                        </div>
+                         <div>
+                            <label for="productGrossWeight" class="text-sm font-medium">Peso Bruto</label>
+                            <input type="number" id="productGrossWeight" step="0.001" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                        </div>
+                        <div>
+                            <label for="productWidth" class="text-sm font-medium">Largura</label>
+                            <input type="number" id="productWidth" step="0.01" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                        </div>
+                        <div>
+                            <label for="productHeight" class="text-sm font-medium">Altura</label>
+                            <input type="number" id="productHeight" step="0.01" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                        </div>
+                         <div>
+                            <label for="productDepth" class="text-sm font-medium">Profundidade</label>
+                            <input type="number" id="productDepth" step="0.01" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                        </div>
+                        <div>
+                            <label for="productStock" class="text-sm font-medium">Estoque Atual</label>
+                            <input type="number" id="productStock" step="1" class="w-full p-2 border border-gray-300 rounded-md mt-1" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Customer Modal -->
+    <div id="customerModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center z-30">
+        <div class="relative mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 id="customerModalTitle" class="text-lg leading-6 font-medium text-gray-900">Adicionar Novo Cliente</h3>
+                <form id="customerForm" class="mt-2 px-7 py-3 space-y-4 text-left">
+                    <input type="hidden" id="editingCustomerId">
+                    <div>
+                        <label for="customerName" class="text-sm font-medium">Nome</label>
+                        <input type="text" id="customerName" class="w-full p-2 border border-gray-300 rounded-md mt-1" required>
+                    </div>
+                    <div>
+                        <label for="customerEmail" class="text-sm font-medium">Email</label>
+                        <input type="email" id="customerEmail" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                    </div>
+                    <div>
+                        <label for="customerPhone" class="text-sm font-medium">Telefone</label>
+                        <input type="tel" id="customerPhone" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button type="submit" class="w-full bg-yellow-600 text-white text-base font-medium px-4 py-2 rounded-lg hover:bg-yellow-700">Salvar Cliente</button>
+                        <button type="button" onclick="closeModal('customerModal')" class="mt-2 w-full bg-gray-200 text-gray-800 text-base font-medium px-4 py-2 rounded-lg hover:bg-gray-300">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Generic Confirmation/Alert Modal -->
+    <div id="infoModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center z-40">
+        <div class="relative mx-auto p-5 border w-full max-w-sm shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div id="infoModalIcon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                     <i data-lucide="alert-triangle" class="h-6 w-6 text-red-600"></i>
+                </div>
+                <h3 id="infoModalTitle" class="text-lg leading-6 font-medium text-gray-900 mt-2">Atenção</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="infoModalMessage" class="text-sm text-gray-500"></p>
+                </div>
+                <div id="infoModalButtons" class="items-center px-4 py-3 space-y-2 sm:space-y-0 sm:flex sm:space-x-2 justify-center">
+                    <button id="infoModalConfirmBtn" class="w-full sm:w-auto bg-red-600 text-white text-base font-medium px-4 py-2 rounded-lg hover:bg-red-700">Confirmar</button>
+                    <button id="infoModalCancelBtn" class="w-full sm:w-auto bg-gray-200 text-gray-800 text-base font-medium px-4 py-2 rounded-lg hover:bg-gray-300">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- DATABASE SIMULATION ---
+        let customers = [
+            { id: 1, name: 'Empresa Alpha', email: 'contato@alpha.com', phone: '11 9999-8888' },
+            { id: 2, name: 'Soluções Beta', email: 'suporte@beta.com', phone: '21 8888-7777' }
+        ];
+        let products = [
+            { id: 1, name: 'Desenvolvimento de Website', price: 3500.00, sku: 'DW-001', status: true, unit: 'UN', weight: 0, grossWeight: 0, width: 0, height: 0, depth: 0, stock: 10 },
+            { id: 2, name: 'Consultoria SEO (mensal)', price: 1200.00, sku: 'SEO-001', status: true, unit: 'SV', weight: 0, grossWeight: 0, width: 0, height: 0, depth: 0, stock: null },
+            { id: 3, name: 'Manutenção de Servidor', price: 450.00, sku: 'MS-001', status: false, unit: 'SV', weight: 0, grossWeight: 0, width: 0, height: 0, depth: 0, stock: null }
+        ];
+        let orders = [
+            { id: 1, customerId: 1, type: 'Pedido', date: '2024-07-25', items: [{ productId: 1, quantity: 1, price: 3500.00 }], total: 3500.00, status: 'Faturado' },
+            { id: 2, customerId: 2, type: 'Orçamento', date: '2024-07-26', items: [{ productId: 2, quantity: 3, price: 1200.00 }], total: 3600.00, status: 'Aberto' }
+        ];
+        let currentOrderItems = [];
+
+        // --- RENDER FUNCTIONS ---
+        function renderCustomers() {
+            const list = document.getElementById('customers-list');
+            if (!list) return;
+            list.innerHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${customers.map(c => `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${c.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.email}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.phone}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onclick="openCustomerModal(${c.id})" class="text-indigo-600 hover:text-indigo-900 p-1"><i data-lucide="edit" class="h-5 w-5"></i></button>
+                                    <button onclick="deleteCustomer(${c.id})" class="text-red-600 hover:text-red-900 p-1"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
+                                </td>
+                            </tr>
+                        `).join('') || `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhum cliente cadastrado.</td></tr>`}
+                    </tbody>
+                </table>`;
+            lucide.createIcons();
+        }
+
+        function renderProducts() {
+            const list = document.getElementById('products-list');
+            if (!list) return;
+            list.innerHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome do Produto</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estoque</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${products.map(p => `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${p.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.sku || 'N/A'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ ${p.price.toFixed(2)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.stock !== null ? p.stock : 'N/A'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                        ${p.status ? 'Ativo' : 'Inativo'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onclick="openProductModal(${p.id})" class="text-indigo-600 hover:text-indigo-900 p-1"><i data-lucide="edit" class="h-5 w-5"></i></button>
+                                    <button onclick="deleteProduct(${p.id})" class="text-red-600 hover:text-red-900 p-1"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
+                                </td>
+                            </tr>
+                        `).join('') || `<tr><td colspan="6" class="text-center p-4 text-gray-500">Nenhum produto cadastrado.</td></tr>`}
+                    </tbody>
+                </table>`;
+            lucide.createIcons();
+        }
+
+        function renderOrders() {
+            const list = document.getElementById('orders-list');
+            if (!list) return;
+
+            const getStatusBadge = (status) => {
+                switch (status) {
+                    case 'Faturado': return 'bg-green-100 text-green-800';
+                    case 'Cancelado': return 'bg-red-100 text-red-800';
+                    case 'Aberto':
+                    default:
+                        return 'bg-blue-100 text-blue-800';
+                }
+            };
+
+            list.innerHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${orders.map(o => {
+                            const customer = customers.find(c => c.id === o.customerId);
+                            return `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#${o.id}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customer ? customer.name : 'Cliente Removido'}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(o.date).toLocaleDateString('pt-BR')}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${o.type === 'Pedido' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                            ${o.type}
+                                        </span>
+                                    </td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(o.status)}">
+                                            ${o.status}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">R$ ${o.total.toFixed(2)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onclick="openOrderModal(${o.id})" class="text-indigo-600 hover:text-indigo-900 p-1"><i data-lucide="edit" class="h-5 w-5"></i></button>
+                                        <button onclick="deleteOrder(${o.id})" class="text-red-600 hover:text-red-900 p-1"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
+                                    </td>
+                                </tr>
+                            `
+                        }).join('') || `<tr><td colspan="7" class="text-center p-4 text-gray-500">Nenhum pedido ou orçamento encontrado.</td></tr>`}
+                    </tbody>
+                </table>`;
+            lucide.createIcons();
+        }
+
+        function updateStats() {
+            document.getElementById('total-orders-stat').textContent = orders.length;
+            document.getElementById('total-products-stat').textContent = products.length;
+            document.getElementById('total-customers-stat').textContent = customers.length;
+            const totalRevenue = orders.filter(o => o.status === 'Faturado').reduce((sum, o) => sum + o.total, 0);
+            document.getElementById('total-revenue-stat').textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+        }
+
+        function renderAll() {
+            renderCustomers();
+            renderProducts();
+            renderOrders();
+            updateStats();
+        }
+
+        // --- MODAL & DIALOG FUNCTIONS ---
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('modal-open');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('modal-open');
+             if (modalId === 'orderModal') {
+                document.getElementById('orderForm').reset();
+                document.getElementById('editingOrderId').value = '';
+                currentOrderItems = [];
+            } else if (modalId === 'productModal') {
+                document.getElementById('productForm').reset();
+                document.getElementById('editingProductId').value = '';
+            } else if (modalId === 'customerModal') {
+                document.getElementById('customerForm').reset();
+                document.getElementById('editingCustomerId').value = '';
+            }
+        }
+        
+        // Generic function to show alerts or confirmations
+        function showInfoModal({ title, message, confirmText = 'Confirmar', cancelText = 'Cancelar', onConfirm, onCancel, isConfirmation = true }) {
+            document.getElementById('infoModalTitle').textContent = title;
+            document.getElementById('infoModalMessage').textContent = message;
+            
+            const confirmBtn = document.getElementById('infoModalConfirmBtn');
+            const cancelBtn = document.getElementById('infoModalCancelBtn');
+
+            confirmBtn.textContent = confirmText;
+            cancelBtn.textContent = cancelText;
+
+            // Clone and replace to remove old event listeners
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+            if (isConfirmation) {
+                newConfirmBtn.style.display = '';
+                newCancelBtn.style.display = '';
+                newConfirmBtn.onclick = () => {
+                    if(onConfirm) onConfirm();
+                    closeModal('infoModal');
+                };
+                newCancelBtn.onclick = () => {
+                    if(onCancel) onCancel();
+                    closeModal('infoModal');
+                };
+            } else { // It's an alert
+                newConfirmBtn.textContent = 'OK';
+                newConfirmBtn.style.display = '';
+                newCancelBtn.style.display = 'none';
+                newConfirmBtn.onclick = () => closeModal('infoModal');
+            }
+            
+            openModal('infoModal');
+        }
+
+
+        // --- FORM LOGIC & CRUD OPERATIONS ---
+        document.getElementById('customerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editingCustomerId = parseInt(document.getElementById('editingCustomerId').value);
+            const customerData = {
+                name: document.getElementById('customerName').value,
+                email: document.getElementById('customerEmail').value,
+                phone: document.getElementById('customerPhone').value
+            };
+            if (editingCustomerId) {
+                const customerIndex = customers.findIndex(c => c.id === editingCustomerId);
+                if (customerIndex > -1) {
+                    customers[customerIndex] = { ...customers[customerIndex], ...customerData };
+                }
+            } else {
+                customerData.id = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1;
+                customers.push(customerData);
+            }
+            closeModal('customerModal');
+            renderAll();
+        });
+
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editingProductId = parseInt(document.getElementById('editingProductId').value);
+            const productData = {
+                name: document.getElementById('productName').value,
+                price: parseFloat(document.getElementById('productPrice').value) || 0,
+                sku: document.getElementById('productSku').value,
+                status: document.getElementById('productStatus').checked,
+                unit: document.getElementById('productUnit').value,
+                weight: parseFloat(document.getElementById('productWeight').value) || 0,
+                grossWeight: parseFloat(document.getElementById('productGrossWeight').value) || 0,
+                width: parseFloat(document.getElementById('productWidth').value) || 0,
+                height: parseFloat(document.getElementById('productHeight').value) || 0,
+                depth: parseFloat(document.getElementById('productDepth').value) || 0,
+                stock: parseInt(document.getElementById('productStock').value)
+            };
+
+            if (isNaN(productData.stock)) {
+                productData.stock = null;
+            }
+
+            if (editingProductId) {
+                const productIndex = products.findIndex(p => p.id === editingProductId);
+                if (productIndex > -1) {
+                    products[productIndex] = { ...products[productIndex], ...productData };
+                }
+            } else {
+                productData.id = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                products.push(productData);
+            }
+            closeModal('productModal');
+            renderAll();
+        });
+
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (currentOrderItems.length === 0) {
+                showInfoModal({
+                    title: 'Pedido Vazio',
+                    message: 'Adicione pelo menos um item ao pedido antes de salvar.',
+                    isConfirmation: false
+                });
+                return;
+            }
+            const editingOrderId = parseInt(document.getElementById('editingOrderId').value);
+            const total = currentOrderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const orderData = {
+                customerId: parseInt(document.getElementById('orderCustomer').value),
+                type: document.getElementById('orderType').value,
+                status: document.getElementById('orderStatus').value,
+                date: new Date().toISOString().split('T')[0],
+                items: [...currentOrderItems],
+                total: total
+            };
+            if (editingOrderId) {
+                const orderIndex = orders.findIndex(o => o.id === editingOrderId);
+                if (orderIndex > -1) {
+                    orders[orderIndex] = { ...orders[orderIndex], ...orderData };
+                }
+            } else {
+                orderData.id = orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1;
+                orders.push(orderData);
+            }
+            closeModal('orderModal');
+            renderAll();
+        });
+        
+        // --- CUSTOMER MODAL & ACTIONS ---
+        function openCustomerModal(customerId = null) {
+            const form = document.getElementById('customerForm');
+            form.reset();
+            const title = document.getElementById('customerModalTitle');
+            const editingCustomerIdInput = document.getElementById('editingCustomerId');
+
+            if (customerId) {
+                const customer = customers.find(c => c.id === customerId);
+                if(customer) {
+                    title.textContent = `Editar Cliente #${customerId}`;
+                    editingCustomerIdInput.value = customerId;
+                    document.getElementById('customerName').value = customer.name;
+                    document.getElementById('customerEmail').value = customer.email;
+                    document.getElementById('customerPhone').value = customer.phone;
+                }
+            } else {
+                title.textContent = 'Adicionar Novo Cliente';
+                editingCustomerIdInput.value = '';
+            }
+            openModal('customerModal');
+        }
+
+        function deleteCustomer(customerId) {
+            showInfoModal({
+                title: 'Excluir Cliente',
+                message: 'Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.',
+                onConfirm: () => {
+                    const customerIndex = customers.findIndex(c => c.id === customerId);
+                    if (customerIndex > -1) {
+                        customers.splice(customerIndex, 1);
+                        renderAll();
+                    }
+                }
             });
         }
+        
+        // --- PRODUCT MODAL & ACTIONS ---
+        function openProductModal(productId = null) {
+            const form = document.getElementById('productForm');
+            form.reset();
+            const title = document.getElementById('productModalTitle');
+            const subtitle = document.getElementById('productModalSubtitle');
+            const editingProductIdInput = document.getElementById('editingProductId');
+            const statusToggle = document.getElementById('productStatus');
+            const statusLabel = document.getElementById('productStatusLabel');
+
+            const updateStatusLabel = () => {
+                statusLabel.textContent = statusToggle.checked ? 'Ativo' : 'Inativo';
+            };
+            statusToggle.removeEventListener('change', updateStatusLabel); // Avoid multiple listeners
+            statusToggle.addEventListener('change', updateStatusLabel);
+
+            if (productId) {
+                const product = products.find(p => p.id === productId);
+                if (product) {
+                    title.textContent = 'Editar Produto';
+                    subtitle.textContent = `Editando: ${product.name}`;
+                    editingProductIdInput.value = productId;
+
+                    document.getElementById('productName').value = product.name;
+                    document.getElementById('productSku').value = product.sku;
+                    statusToggle.checked = product.status;
+                    document.getElementById('productPrice').value = product.price;
+                    document.getElementById('productUnit').value = product.unit;
+                    document.getElementById('productWeight').value = product.weight;
+                    document.getElementById('productGrossWeight').value = product.grossWeight;
+                    document.getElementById('productWidth').value = product.width;
+                    document.getElementById('productHeight').value = product.height;
+                    document.getElementById('productDepth').value = product.depth;
+                    document.getElementById('productStock').value = product.stock;
+                }
+            } else {
+                title.textContent = 'Novo Produto';
+                subtitle.textContent = 'Preencha os detalhes do produto abaixo.';
+                editingProductIdInput.value = '';
+                statusToggle.checked = true; // Default to active
+            }
+            updateStatusLabel();
+            openModal('productModal');
+        }
+
+        function deleteProduct(productId) {
+             showInfoModal({
+                title: 'Excluir Produto',
+                message: 'Tem certeza que deseja excluir este produto?',
+                onConfirm: () => {
+                    const productIndex = products.findIndex(p => p.id === productId);
+                    if (productIndex > -1) {
+                        products.splice(productIndex, 1);
+                        renderAll();
+                    }
+                }
+            });
+        }
+        
+        // --- ORDER MODAL & ACTIONS ---
+        function openOrderModal(orderId = null) {
+            const form = document.getElementById('orderForm');
+            form.reset();
+            const title = document.getElementById('orderModalTitle');
+            const editingOrderIdInput = document.getElementById('editingOrderId');
+            populateOrderFormSelects();
+
+            if (orderId) {
+                const order = orders.find(o => o.id === orderId);
+                if (order) {
+                    title.textContent = `Editar Pedido #${orderId}`;
+                    editingOrderIdInput.value = orderId;
+                    document.getElementById('orderCustomer').value = order.customerId;
+                    document.getElementById('orderType').value = order.type;
+                    document.getElementById('orderStatus').value = order.status;
+                    currentOrderItems = JSON.parse(JSON.stringify(order.items));
+                }
+            } else {
+                title.textContent = 'Criar Novo Pedido/Orçamento';
+                editingOrderIdInput.value = '';
+                document.getElementById('orderStatus').value = 'Aberto'; // Default status
+                currentOrderItems = [];
+            }
+            renderOrderItems();
+            updateOrderTotal();
+            openModal('orderModal');
+        }
+
+        function deleteOrder(orderId) {
+            showInfoModal({
+                title: 'Excluir Pedido',
+                message: 'Tem certeza que deseja excluir este pedido/orçamento?',
+                onConfirm: () => {
+                    const orderIndex = orders.findIndex(o => o.id === orderId);
+                    if (orderIndex > -1) {
+                        orders.splice(orderIndex, 1);
+                        renderAll();
+                    }
+                }
+            });
+        }
+
+        function populateOrderFormSelects() {
+            const customerSelect = document.getElementById('orderCustomer');
+            customerSelect.innerHTML = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            const productSelect = document.getElementById('productSelector');
+            productSelect.innerHTML = products.filter(p => p.status).map(p => `<option value="${p.id}">${p.name} - R$ ${p.price.toFixed(2)}</option>`).join('');
+        }
+
+        function renderOrderItems() {
+            const container = document.getElementById('orderItemsContainer');
+            container.innerHTML = currentOrderItems.map((item, index) => {
+                const product = products.find(p => p.id === item.productId);
+                return `
+                <div class="flex justify-between items-center bg-gray-100 p-2 rounded-md">
+                    <div>
+                        <p class="font-medium">${product ? product.name : 'Produto removido'}</p>
+                        <p class="text-sm text-gray-600">${item.quantity} x R$ ${item.price.toFixed(2)}</p>
+                    </div>
+                    <button type="button" onclick="removeOrderItem(${index})" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function updateOrderTotal() {
+            const total = currentOrderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('orderTotal').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+
+        document.getElementById('addOrderItem').addEventListener('click', function() {
+            const productId = parseInt(document.getElementById('productSelector').value);
+            const quantity = parseInt(document.getElementById('itemQuantity').value);
+            const product = products.find(p => p.id === productId);
+            if (product && quantity > 0) {
+                const existingItem = currentOrderItems.find(item => item.productId === productId);
+                if (existingItem) {
+                    existingItem.quantity += quantity;
+                } else {
+                    currentOrderItems.push({ productId: product.id, quantity: quantity, price: product.price });
+                }
+                renderOrderItems();
+                updateOrderTotal();
+            }
+        });
+
+        function removeOrderItem(index) {
+            currentOrderItems.splice(index, 1);
+            renderOrderItems();
+            updateOrderTotal();
+        }
+
+        // --- TAB NAVIGATION ---
+        const tabLinks = document.querySelectorAll('.tab-link');
+        tabLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tab = link.dataset.tab;
+                document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('tab-active'));
+                link.classList.add('tab-active');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.toggle('hidden', content.id !== tab);
+                });
+                window.location.hash = tab;
+            });
+        });
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            
+            // Check hash for initial tab
+            const initialTab = window.location.hash.replace('#', '') || 'dashboard';
+            const initialLink = document.querySelector(`.tab-link[data-tab="${initialTab}"]`);
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(initialTab)?.classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('tab-active'));
+            if(initialLink) {
+                initialLink.classList.add('tab-active');
+            } else {
+                 document.querySelector('.tab-link[data-tab="dashboard"]').classList.add('tab-active');
+            }
+            
+            renderAll();
+        });
+
     </script>
 </body>
 </html>
